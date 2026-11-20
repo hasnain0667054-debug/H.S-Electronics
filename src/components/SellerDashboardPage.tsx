@@ -22,8 +22,8 @@ import {
   X,
 } from 'lucide-react';
 import {
-  CATEGORIES,
   formatPKR,
+  type CategoryItem,
   type CategoryName,
   type Product,
   type ProductArtworkKey,
@@ -58,8 +58,10 @@ interface MediaSlot {
 
 interface SellerDashboardPageProps {
   products: Product[];
+  categories: CategoryItem[];
   orders: SellerOrderRecord[];
   onSaveProduct: (product: Product, mode: 'draft' | 'published') => void;
+  onCreateCategory: (name: string) => CategoryItem | null;
   onDeleteProduct: (productId: string) => void;
   onUpdateOrderStatus: (orderId: string, status: SellerOrderRecord['status']) => void;
   onUpdateOrderTracking: (
@@ -74,18 +76,26 @@ interface SellerDashboardPageProps {
   onBackToStore: () => void;
 }
 
-const DEFAULT_ARTWORK_FOR_CATEGORY: Record<CategoryName, ProductArtworkKey> = {
+const DEFAULT_ARTWORK_FOR_CATEGORY: Record<string, ProductArtworkKey> = {
   'Audio & Headphones': 'headphones',
   'Wearables & Mobile': 'smartwatch',
   'Laptops & Peripherals': 'keyboard',
   'Smart Home & Tech': 'router',
   'Gaming & Cameras': 'camera',
+  'Chargers & Power Banks': 'gan-charger',
+  'Cables & Adapters': 'usb-hub',
+  'Speakers & Earbuds': 'speaker',
+  'Accessories Battery Charger': 'powerbank',
+  'Solar Inverter': 'router',
+  'Home Appliances': 'purifier',
 };
 
 export const SellerDashboardPage: React.FC<SellerDashboardPageProps> = ({
   products,
+  categories,
   orders,
   onSaveProduct,
+  onCreateCategory,
   onDeleteProduct,
   onUpdateOrderStatus,
   onUpdateOrderTracking,
@@ -98,7 +108,12 @@ export const SellerDashboardPage: React.FC<SellerDashboardPageProps> = ({
 
   // Add New Product Form State
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState<CategoryName>('Audio & Headphones');
+  const [category, setCategory] = useState<CategoryName>(
+    categories[0]?.id ?? 'Chargers & Power Banks'
+  );
+  const [showCustomCategoryInput, setShowCustomCategoryInput] = useState(false);
+  const [customCategoryName, setCustomCategoryName] = useState('');
+  const [customCategoryError, setCustomCategoryError] = useState<string | null>(null);
   const [price, setPrice] = useState('');
   const [discountedPrice, setDiscountedPrice] = useState('');
   const [stockQuantity, setStockQuantity] = useState('25');
@@ -232,7 +247,7 @@ export const SellerDashboardPage: React.FC<SellerDashboardPageProps> = ({
       discountPercent: computedDiscountPct,
       rating: 5.0,
       reviewCount: 1,
-      artworkKey: DEFAULT_ARTWORK_FOR_CATEGORY[category],
+      artworkKey: DEFAULT_ARTWORK_FOR_CATEGORY[category] ?? 'headphones',
       customImageUrls: uploadedUrls.length > 0 ? uploadedUrls : undefined,
       status,
       stockLeft: stock,
@@ -648,24 +663,95 @@ export const SellerDashboardPage: React.FC<SellerDashboardPageProps> = ({
                       </div>
 
                       <div className="space-y-1.5">
-                        <label
-                          htmlFor="prod-category"
-                          className="text-xs font-semibold text-[#212121] block"
-                        >
-                          Category
-                        </label>
+                        <div className="flex items-center justify-between gap-2">
+                          <label
+                            htmlFor="prod-category"
+                            className="text-xs font-semibold text-[#212121] block"
+                          >
+                            Category
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowCustomCategoryInput((prev) => !prev);
+                              setCustomCategoryError(null);
+                            }}
+                            className="text-xs font-semibold text-[#F85606] hover:underline inline-flex items-center gap-1 cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>{showCustomCategoryInput ? 'Close' : 'Create Custom Category'}</span>
+                          </button>
+                        </div>
                         <select
                           id="prod-category"
                           value={category}
                           onChange={(e) => setCategory(e.target.value as CategoryName)}
                           className="w-full h-11 px-3.5 rounded-lg border border-black/15 bg-white text-sm text-[#212121] focus:outline-none focus:border-[#F85606] cursor-pointer"
                         >
-                          {CATEGORIES.map((c) => (
+                          {categories.map((c) => (
                             <option key={c.id} value={c.id}>
                               {c.label}
                             </option>
                           ))}
                         </select>
+
+                        {showCustomCategoryInput && (
+                          <div className="p-3 rounded-lg bg-[#FAFAFA] border border-black/10 space-y-2">
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={customCategoryName}
+                                onChange={(e) => {
+                                  setCustomCategoryName(e.target.value);
+                                  setCustomCategoryError(null);
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    const created = onCreateCategory(customCategoryName);
+                                    if (!created) {
+                                      setCustomCategoryError('Enter a category name.');
+                                      return;
+                                    }
+                                    setCategory(created.id);
+                                    setCustomCategoryName('');
+                                    setShowCustomCategoryInput(false);
+                                    setFormNotice(
+                                      `Category "${created.label}" is ready in Seller Center & Storefront.`
+                                    );
+                                  }
+                                }}
+                                placeholder="e.g. UPS & Stabilizers"
+                                aria-label="Custom category name"
+                                className="flex-1 h-9 px-3 rounded-md border border-black/15 bg-white text-xs sm:text-sm text-[#212121] focus:outline-none focus:border-[#F85606]"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const created = onCreateCategory(customCategoryName);
+                                  if (!created) {
+                                    setCustomCategoryError('Enter a category name.');
+                                    return;
+                                  }
+                                  setCategory(created.id);
+                                  setCustomCategoryName('');
+                                  setShowCustomCategoryInput(false);
+                                  setFormNotice(
+                                    `Category "${created.label}" is ready in Seller Center & Storefront.`
+                                  );
+                                }}
+                                className="h-9 px-3.5 rounded-md bg-[#F85606] hover:bg-[#E04A00] text-white text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
+                              >
+                                Add Category
+                              </button>
+                            </div>
+                            {customCategoryError && (
+                              <p className="text-[11px] text-[#DC2626] font-medium">
+                                {customCategoryError}
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       <div className="space-y-1.5">

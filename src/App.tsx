@@ -1,6 +1,12 @@
 import {useState} from 'react';
 import {CheckCircle2, X} from 'lucide-react';
-import {PRODUCTS, type CategoryName, type Product} from './data/catalog';
+import {
+  CATEGORIES,
+  PRODUCTS,
+  type CategoryItem,
+  type CategoryName,
+  type Product,
+} from './data/catalog';
 import {Header} from './components/Header';
 import {HeroSection} from './components/HeroSection';
 import {FlashSaleSection} from './components/FlashSaleSection';
@@ -66,6 +72,7 @@ const INITIAL_ORDERS: SellerOrderRecord[] = [
 
 export default function App() {
   const [activeView, setActiveView] = useState<ActiveView>('home');
+  const [categories, setCategories] = useState<CategoryItem[]>(CATEGORIES);
   const [catalogProducts, setCatalogProducts] = useState<Product[]>(PRODUCTS);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -264,6 +271,29 @@ export default function App() {
     }, 60);
   };
 
+  const handleCreateCategory = (rawName: string): CategoryItem | null => {
+    const trimmed = rawName.trim();
+    if (!trimmed) return null;
+
+    const existing = categories.find(
+      (c) => c.id.toLowerCase() === trimmed.toLowerCase() || c.label.toLowerCase() === trimmed.toLowerCase()
+    );
+    if (existing) {
+      showToast(`Category "${existing.label}" is already available`);
+      return existing;
+    }
+
+    const newCategory: CategoryItem = {
+      id: trimmed,
+      label: trimmed,
+      tagline: 'Custom store department',
+      subcategories: ['All Products'],
+    };
+    setCategories((prev) => [...prev, newCategory]);
+    showToast(`Added custom category "${trimmed}"`);
+    return newCategory;
+  };
+
   const handleSaveSellerProduct = (newProduct: Product, status: 'draft' | 'published') => {
     setCatalogProducts((prev) => [newProduct, ...prev]);
     showToast(
@@ -319,6 +349,9 @@ export default function App() {
         cartCount={totalCartCount}
         wishlistCount={wishlistIds.length}
         userName={userName}
+        categories={categories}
+        activeCategory={activeCategory}
+        onSelectCategory={handleSelectCategory}
         onOpenCart={() => {
           setActiveView('cart');
           window.scrollTo({top: 0, behavior: 'smooth'});
@@ -344,8 +377,10 @@ export default function App() {
         ) : activeView === 'seller' ? (
           <SellerDashboardPage
             products={catalogProducts}
+            categories={categories}
             orders={sellerOrders}
             onSaveProduct={handleSaveSellerProduct}
+            onCreateCategory={handleCreateCategory}
             onDeleteProduct={handleDeleteSellerProduct}
             onUpdateOrderStatus={handleUpdateOrderStatus}
             onUpdateOrderTracking={handleUpdateOrderTracking}
@@ -385,6 +420,8 @@ export default function App() {
         ) : (
           <>
             <HeroSection
+              categories={categories}
+              totalProductsCount={publishedProducts.length}
               activeCategory={activeCategory}
               onSelectCategory={handleSelectCategory}
             />
@@ -395,6 +432,7 @@ export default function App() {
             />
             <JustForYouSection
               products={publishedProducts}
+              categories={categories}
               activeCategory={activeCategory}
               onSelectCategory={handleSelectCategory}
               searchQuery={searchQuery}

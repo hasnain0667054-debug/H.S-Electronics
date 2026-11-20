@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {Heart, Search, ShoppingCart, User, X} from 'lucide-react';
-import {formatPKR, type Product} from '../data/catalog';
+import {Heart, LayoutGrid, Search, ShoppingCart, User, X} from 'lucide-react';
+import {formatPKR, type CategoryItem, type CategoryName, type Product} from '../data/catalog';
 import {ProductArtwork} from './ProductArtwork';
 
 interface HeaderProps {
@@ -10,6 +10,9 @@ interface HeaderProps {
   cartCount: number;
   wishlistCount: number;
   userName: string | null;
+  categories: CategoryItem[];
+  activeCategory: CategoryName | 'All';
+  onSelectCategory: (cat: CategoryName | 'All') => void;
   onOpenCart: () => void;
   onOpenWishlist: () => void;
   onOpenAuth: () => void;
@@ -26,6 +29,9 @@ export const Header: React.FC<HeaderProps> = ({
   cartCount,
   wishlistCount,
   userName,
+  categories,
+  activeCategory,
+  onSelectCategory,
   onOpenCart,
   onOpenWishlist,
   onOpenAuth,
@@ -104,7 +110,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onSearchChange(e.target.value);
                 setFocused(true);
               }}
-              placeholder="Search headphones, smartwatches, GaN chargers, mechanical keyboards..."
+              placeholder="Search headphones, chargers, solar inverters, home appliances..."
               aria-label="Search products"
               className="flex-1 h-full bg-transparent px-4 text-sm text-[#212121] placeholder:text-[#757575] focus:outline-none min-w-0"
             />
@@ -225,6 +231,49 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Category Navigation Bar */}
+      <nav
+        aria-label="Category navigation"
+        className="border-t border-black/[0.06] bg-[#FAFAFA]"
+      >
+        <div className="max-w-[1360px] mx-auto px-4 sm:px-6 h-10 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+          <button
+            type="button"
+            onClick={() => onSelectCategory('All')}
+            className={`px-3 py-1 rounded-md text-xs font-semibold inline-flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+              activeCategory === 'All'
+                ? 'bg-[#212121] text-white'
+                : 'text-[#424242] hover:text-[#F85606] hover:bg-white'
+            }`}
+          >
+            <LayoutGrid className="w-3.5 h-3.5" />
+            <span>All Categories</span>
+          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => {
+                onSelectCategory(cat.id);
+                window.setTimeout(() => {
+                  document.getElementById('just-for-you')?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start',
+                  });
+                }, 60);
+              }}
+              className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                activeCategory === cat.id
+                  ? 'bg-[#FFF3EC] text-[#F85606]'
+                  : 'text-[#424242] hover:text-[#F85606] hover:bg-white'
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+      </nav>
     </header>
   );
 };

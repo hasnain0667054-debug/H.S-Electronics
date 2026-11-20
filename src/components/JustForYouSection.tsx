@@ -1,10 +1,11 @@
 import React, {useState} from 'react';
 import {Heart, ShoppingCart, Star, Zap} from 'lucide-react';
-import {CATEGORIES, formatPKR, type CategoryName, type Product} from '../data/catalog';
+import {formatPKR, type CategoryItem, type CategoryName, type Product} from '../data/catalog';
 import {ProductArtwork} from './ProductArtwork';
 
 interface JustForYouSectionProps {
   products: Product[];
+  categories: CategoryItem[];
   activeCategory: CategoryName | 'All';
   onSelectCategory: (cat: CategoryName | 'All') => void;
   searchQuery: string;
@@ -20,6 +21,7 @@ type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'rating';
 
 export const JustForYouSection: React.FC<JustForYouSectionProps> = ({
   products,
+  categories,
   activeCategory,
   onSelectCategory,
   searchQuery,
@@ -55,8 +57,8 @@ export const JustForYouSection: React.FC<JustForYouSectionProps> = ({
 
   return (
     <section id="just-for-you" className="max-w-[1360px] mx-auto px-4 sm:px-6 py-6">
-      {/* Section Header + Filter Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+      {/* Section Header + Sort Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
         <div className="flex flex-wrap items-center gap-3">
           <h2 className="font-display text-xl sm:text-2xl font-bold text-[#212121]">
             Just For You
@@ -77,48 +79,46 @@ export const JustForYouSection: React.FC<JustForYouSectionProps> = ({
           )}
         </div>
 
-        {/* Category Segmented Tabs + Sort Select */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="hidden sm:flex items-center gap-1 bg-white p-1 rounded-lg border border-black/[0.07]">
-            <button
-              type="button"
-              onClick={() => onSelectCategory('All')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
-                activeCategory === 'All'
-                  ? 'bg-[#212121] text-white'
-                  : 'text-[#616161] hover:text-[#212121]'
-              }`}
-            >
-              All
-            </button>
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => onSelectCategory(cat.id)}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
-                  activeCategory === cat.id
-                    ? 'bg-[#F85606] text-white'
-                    : 'text-[#616161] hover:text-[#212121]'
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as SortOption)}
+          aria-label="Sort products"
+          className="h-9 px-3 rounded-lg bg-white border border-black/[0.08] text-xs font-medium text-[#212121] focus:outline-none focus:border-[#F85606] cursor-pointer self-start sm:self-auto"
+        >
+          <option value="featured">Sort: Recommended</option>
+          <option value="price-asc">Price: Low to High</option>
+          <option value="price-desc">Price: High to Low</option>
+          <option value="rating">Highest Rated</option>
+        </select>
+      </div>
 
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortOption)}
-            aria-label="Sort products"
-            className="h-9 px-3 rounded-lg bg-white border border-black/[0.08] text-xs font-medium text-[#212121] focus:outline-none focus:border-[#F85606] cursor-pointer"
+      {/* Storefront Category Filters (wraps cleanly for default + custom categories) */}
+      <div className="flex flex-wrap items-center gap-1.5 bg-white p-2 rounded-xl border border-black/[0.07] mb-4">
+        <button
+          type="button"
+          onClick={() => onSelectCategory('All')}
+          className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+            activeCategory === 'All'
+              ? 'bg-[#212121] text-white'
+              : 'text-[#616161] hover:bg-[#F5F5F5] hover:text-[#212121]'
+          }`}
+        >
+          All
+        </button>
+        {categories.map((cat) => (
+          <button
+            key={cat.id}
+            type="button"
+            onClick={() => onSelectCategory(cat.id)}
+            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+              activeCategory === cat.id
+                ? 'bg-[#F85606] text-white'
+                : 'text-[#616161] hover:bg-[#F5F5F5] hover:text-[#212121]'
+            }`}
           >
-            <option value="featured">Sort: Recommended</option>
-            <option value="price-asc">Price: Low to High</option>
-            <option value="price-desc">Price: High to Low</option>
-            <option value="rating">Highest Rated</option>
-          </select>
-        </div>
+            {cat.label}
+          </button>
+        ))}
       </div>
 
       {/* Empty Search State */}
